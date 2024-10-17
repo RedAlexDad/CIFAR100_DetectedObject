@@ -14,7 +14,7 @@ const DOM = {
   labelsField: "labels",
   undoBtn: "undo",
   addBtn: "add",
-  generateRandom: "random",
+  generateRandomBtn: "random",
   resetBtn: "reset",
   nField: "N",
   predictedLabel: "prediction",
@@ -171,8 +171,7 @@ const drawHist = (preds) => {
 find(DOM.modelFile).onchange = async function (event) {
   var fileList = this.files;
   if (!fileList.length) {
-    find(DOM.imageFile).style.display = "none";
-    find(DOM.imageFile).value = "";
+    find(DOM.imageFile).style.display = "none"; // Скрыть файл изображения
     find(DOM.cifarImage).parentElement.style.display = "none";
     find(DOM.controlsGroup).style.display = "none";
     find(DOM.resetBtn).click();
@@ -188,12 +187,12 @@ find(DOM.modelFile).onchange = async function (event) {
     img.fill(1);
     const input = new onnx.Tensor(img, "float32", [1, 32, 32, 3]);
     const output = (await onnxSess.run([input])).get("output").data;
-    find(DOM.imageFile).style.display = "block";
+    find(DOM.imageFile).style.display = "none"; // Скрыть файл модели
     find(DOM.headerText).textContent = INSTRUCTION.step2;
   };
   reader.readAsDataURL(file);
-  console.log(fileList[0]);
 };
+
 
 const applySoftmax = (logits) => {
   const maxLogit = Math.max(...logits);
@@ -230,9 +229,7 @@ const recognizeImage = async () => {
     for (let i = 0; i < classes.length; i++)
       output_slice[i] = output[classes[i]];
   }
-  find(DOM.predictedLabel).textContent = mapping[
-    classes[indexOfMax(output_slice)]
-  ].toUpperCase();
+  find(DOM.predictedLabel).textContent = mapping[classes[indexOfMax(output_slice)]].toUpperCase();
   drawHist(applySoftmax(output_slice));
 };
 
@@ -264,6 +261,9 @@ find(DOM.imageFile).onchange = function (event) {
   imgVis.parentElement.style.display = "block";
   controlsGroup.style.display = "block";
   find(DOM.headerText).textContent = INSTRUCTION.step3;
+
+  // Скрываем input file после загрузки
+  find(DOM.imageFile).style.display = "none"; // Скрыть файл изображения
 };
 
 function indexOfMax(arr) {
@@ -284,10 +284,29 @@ function indexOfMax(arr) {
   return maxIndex;
 }
 
+find(DOM.generateRandomBtn).addEventListener("click", (e) => {
+  classesBackup.push([...classes]);
+  classes.length = 0;
+  for (let i = 0; (i < 100) & (classes.length < 10); i++) {
+    const label = Math.floor(Math.random() * 100);
+    appendLabelId(label, false);
+  }
+  find(DOM.nField).textContent = classes;
+  recognizeImage();
+});
+
 find(DOM.labelId).addEventListener("change", function () {
   let v = parseInt(this.value);
   if (v < 0) this.value = 0;
   if (v > 99) this.value = 99;
+});
+
+// Обработчик нажатия клавиши Enter для поля ввода labelId
+find(DOM.labelId).addEventListener("keydown", function (event) {
+  if (event.key === 'Enter') {
+    event.preventDefault(); // Отменяем стандартное поведение Enter
+    find(DOM.addBtn).click(); // Имитируем нажатие кнопки "Добавить"
+  }
 });
 
 const appendLabelId = (labelId, backup = true) => {
@@ -308,17 +327,6 @@ find(DOM.addBtn).addEventListener("click", (e) => {
   }
   const value = parseInt(labelId.value);
   appendLabelId(value);
-  find(DOM.nField).textContent = classes;
-  recognizeImage();
-});
-
-find(DOM.generateRandom).addEventListener("click", (e) => {
-  classesBackup.push([...classes]);
-  classes.length = 0;
-  for (let i = 0; (i < 100) & (classes.length < 10); i++) {
-    const label = Math.floor(Math.random() * 100);
-    appendLabelId(label, false);
-  }
   find(DOM.nField).textContent = classes;
   recognizeImage();
 });
