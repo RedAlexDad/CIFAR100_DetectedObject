@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+{% load static %} 
+
+<html lang="ru">
+
+<head>
+    <meta charset="windows-1251">
+    <title>DZ1</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="fixed-header">
+        <div class="container">
+            <h1>Классификация изображений</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="upload-form">
+            <form action="predictImage" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <label for="FilePath">Выберите изображение:</label>
+                <input name="filePath" type="file" required><br>
+                <input type="submit" value="Классифицировать">
+            </form>
+        </div>
+
+        <div class="result-section">
+            {% if scorePrediction %}
+            <h3>Результат классификации: {{scorePrediction}}</h3>
+            <img src="{{ img_uri }}" alt="Классифицированное изображение">
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+
+</html>
