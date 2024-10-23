@@ -16,12 +16,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, TensorDataset
-import torchvision
 import torchvision.models as models
-from torch.utils.tensorboard import SummaryWriter
 
 class CIFAR100Trainer:
-    def __init__(self, classes, batch_size=128, lr_rate=1e-4, criterion=nn.CrossEntropyLoss(), experiment_name='default'):
+    def __init__(self, classes, batch_size=128, lr_rate=1e-4, criterion=nn.CrossEntropyLoss()):
         self.classes = classes
         self.batch_size = batch_size
         self.lr_rate = lr_rate
@@ -31,10 +29,6 @@ class CIFAR100Trainer:
         # Загрузка названий классов
         self.class_names = self.load_class_names()
         
-        # Уникальная директория для каждого эксперимента
-        log_dir = f'logs/{experiment_name}'
-        self.writer = SummaryWriter(log_dir=log_dir)
-
         # Чтение тренировочной выборки (обучающих данных)
         with open('cifar-100-python/train', 'rb') as f:
             data_train = pickle.load(f, encoding='latin1')
@@ -99,12 +93,8 @@ class CIFAR100Trainer:
             average_loss = running_loss / len(self.train_loader)
             self.history["epoch"].append(epoch + 1)
             self.history["loss"].append(average_loss)  # Сохранение средней потери
-    
-            # Логирование потерь в TensorBoard
-            self.writer.add_scalar('Loss/train', average_loss, epoch)
+
             print(f'Epoch: {epoch+1}/{epochs}, Loss: {running_loss/len(self.train_loader):.6f}')
-            
-        self.writer.close()  # Закрытие SummaryWriter после обучения
 
     def evaluate(self, model):
         model = model.to(self.device)
@@ -142,10 +132,6 @@ class CIFAR100Trainer:
             report = classification_report(all_target, all_predicted, target_names=selected_class_names, zero_division=0, digits=4)
             print(report)
             print('-' * 50)
-            
-        # Вычисляем и логируем точность
-        accuracy = np.sum(all_predicted == all_target) / len(all_target)
-        self.writer.add_scalar(f'Accuracy/{part}', accuracy, len(self.history["epoch"]) - 1)
 
     def save_model(self, model, path='models/'):
         # Генерируем уникальный идентификатор
@@ -213,7 +199,73 @@ class CIFAR100Trainer:
     
         plt.tight_layout()
         plt.show()
-                
+
+    def load_class_names(self):
+        """Загружает названия классов из мета-файла."""
+        with open('cifar-100-python/meta', 'rb') as f:
+            meta = pickle.load(f, encoding='latin1')
+        return meta['fine_label_names']
+    
+    def display_images_with_predictions(self, model, image_dir='./images'):
+        """Отображает изображения и предсказания модели с процентным соотношением для заданных классов."""
+        # Определение преобразований для входных изображений
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # Пример нормализации, может потребоваться адаптация
+        ])
+    
+        # Создаем отображение названий классов для выбранных индексов
+        selected_class_names = [self.class_names[i] for i in self.classes]
+    
+        # Получаем список изображений
+        images = [img for img in os.listdir(image_dir) if img.endswith(('jpg', 'png', 'jpeg'))]
+        predictions = []
+        probabilities = []
+    
+        for img_name in images:
+            img_path = os.path.join(image_dir, img_name)
+            img = Image.open(img_path).convert('RGB')  # Открываем изображение
+            img_tensor = transform(img).unsqueeze(0).to(self.device)  # Применяем преобразования и добавляем размерность батча
+            
+            # Получаем предсказание модели
+            with torch.no_grad():
+                output = model(img_tensor)
+                probs = torch.softmax(output, dim=1)  # Вычисляем вероятности
+                predicted = torch.argmax(probs).item()  # Предсказанный класс
+                predictions.append(predicted)  # Сохраняем предсказание
+                probabilities.append(probs.squeeze().cpu().numpy())  # Сохраняем вероятности
+    
+        # Визуализация
+        num_images = len(images)
+        cols = 3
+        rows = (num_images + cols - 1) // cols  # Вычисляем количество строк
+        
+        fig, axs = plt.subplots(rows, cols, figsize=(15, 5 * rows))
+        axs = axs.flatten()  # Упрощаем доступ к осям
+    
+        for i, img_name in enumerate(images):
+            img_path = os.path.join(image_dir, img_name)
+            img = Image.open(img_path)
+            axs[i].imshow(img)
+            
+            # Выводим предсказания и вероятности для выбранных классов
+            title_text = f'Predicted: {self.class_names[predictions[i]]} (ID: {predictions[i]})\n'
+            for cls in self.classes:
+                # Получаем индекс и название класса
+                if cls < len(probabilities[i]):
+                    title_text += f'{selected_class_names[self.classes.index(cls)]}: {probabilities[i][cls] * 100:.2f}%, '
+    
+            axs[i].set_title(title_text[:-2])  # Убираем последний запятую
+            axs[i].axis('off')  # Скрываем оси
+    
+        # Удаляем пустые оси, если их больше чем изображений
+        for j in range(i + 1, len(axs)):
+            axs[j].axis('off')
+    
+        plt.tight_layout()
+        plt.show()
+        
+        
 class Normalize(nn.Module):
     def __init__(self, mean, std):
         super(Normalize, self).__init__()

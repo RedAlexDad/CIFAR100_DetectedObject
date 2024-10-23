@@ -57,7 +57,7 @@ if "__main__" == __name__:
     CLASSES = [94, 21, 51]
 
     batch_size=2**5
-    epochs=100
+    epochs=10
     criterion=nn.NLLLoss()
     lr_rate = 1e-5
     hidden_layers=[2**4, 2**6, 2**4]
@@ -79,5 +79,3 @@ if "__main__" == __name__:
     trainer.evaluate(cifar100_001)
         
     trainer.save_model(cifar100_001)
-
-    # trainer.display_images_with_predictions(cifar100_001, './images')
