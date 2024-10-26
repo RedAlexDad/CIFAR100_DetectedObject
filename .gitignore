@@ -1,3 +1,6 @@
 cifar-100-python*
 /web/node_modules
 /web1/node_modules
+
+# BIG models
+/models/cifar100_6_model.onnx
