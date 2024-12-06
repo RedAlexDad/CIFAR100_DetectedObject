@@ -185,7 +185,7 @@ find(DOM.modelFile).onchange = async function (event) {
     await onnxSess.loadModel(reader.result);
     const img = new Float32Array(32 * 32 * 3);
     img.fill(1);
-    const input = new onnx.Tensor(img, "float32", [1, 32, 32, 3]);
+    const input = new onnx.Tensor(img, "float32", [1, 3, 32, 32]);
     const output = (await onnxSess.run([input])).get("output").data;
     find(DOM.imageFile).style.display = "none"; // Скрыть файл модели
     find(DOM.headerText).textContent = INSTRUCTION.step2;
@@ -220,7 +220,7 @@ const recognizeImage = async () => {
   console.log(img);
 
   //const img = new Float32Array(32 * 32 * 3);
-  const input = new onnx.Tensor(img, "float32", [1, 32, 32, 3]);
+  const input = new onnx.Tensor(img, "float32", [1, 3, 32, 32]);
   const output = (await onnxSess.run([input])).get("output").data;
   const output_slice = [...output];
   console.log(output_slice);
