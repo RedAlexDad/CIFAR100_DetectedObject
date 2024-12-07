@@ -3,6 +3,7 @@ import torch
 import tarfile
 import urllib.request
 import torch.nn as nn
+from torchsummary import summary
 
 from CIFAR100 import CIFAR100Model, CIFAR100Trainer
 
@@ -64,18 +65,20 @@ if "__main__" == __name__:
 
     trainer = CIFAR100Trainer(CLASSES, batch_size, lr_rate)
         
-    cifar100_001 = CIFAR100Model(
+    cifar100 = CIFAR100ModelCNN(
         hidden_layers=hidden_layers, 
         dropout_prob=0.5, 
         num_classes=CLASSES.__len__()
     )
 
-    print(cifar100_001)
+    print(cifar100.to(device))
+    
+    summary(cifar100, input_size=(3, 32, 32))
 
-    trainer.train(cifar100_001, epochs)
+    trainer.train(cifar100, epochs)
 
     trainer.plot_training_history()
 
-    trainer.evaluate(cifar100_001)
+    trainer.evaluate(cifar100)
         
-    trainer.save_model(cifar100_001)
+    trainer.save_model(cifar100)
