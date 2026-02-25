@@ -181,16 +181,20 @@ find(DOM.modelFile).onchange = async function (event) {
   let file = fileList[0];
   let reader = new FileReader();
   reader.onloadend = async function () {
-    onnxSess = new onnx.InferenceSession();
-    await onnxSess.loadModel(reader.result);
-    const img = new Float32Array(32 * 32 * 3);
-    img.fill(1);
-    const input = new onnx.Tensor(img, "float32", [1, 32, 32, 3]);
-    const output = (await onnxSess.run([input])).get("output").data;
-    find(DOM.imageFile).style.display = "none"; // Скрыть файл модели
-    find(DOM.headerText).textContent = INSTRUCTION.step2;
+    try {
+      onnxSess = await ort.InferenceSession.create(reader.result);
+      const img = new Float32Array(32 * 32 * 3);
+      img.fill(1);
+      const input = new ort.Tensor("float32", img, [1, 32, 32, 3]);
+      const output = (await onnxSess.run({ input: input })).output;
+      find(DOM.imageFile).style.display = "none"; // Скрыть файл модели
+      find(DOM.headerText).textContent = INSTRUCTION.step2;
+    } catch (error) {
+      console.error('Ошибка при загрузке модели:', error);
+      alert('Произошла ошибка при загрузке модели. Убедитесь, что файл модели корректен и содержит все необходимые данные.');
+    }
   };
-  reader.readAsDataURL(file);
+  reader.readAsArrayBuffer(file);
 };
 
 
@@ -219,17 +223,32 @@ const recognizeImage = async () => {
   canvas.remove();
   console.log(img);
 
-  //const img = new Float32Array(32 * 32 * 3);
-  const input = new onnx.Tensor(img, "float32", [1, 32, 32, 3]);
-  const output = (await onnxSess.run([input])).get("output").data;
-  const output_slice = [...output];
-  console.log(output_slice);
-  if (output.length === 100) {
-    output_slice.length = classes.length;
+  const input = new ort.Tensor("float32", new Float32Array(img), [1, 32, 32, 3]);
+  const output = (await onnxSess.run({ input: input })).output;
+  const outputData = output.data;
+  console.log("Output shape:", output.dims, "Output length:", outputData.length);
+  
+  // Если модель возвращает 100 классов, выбираем только нужные
+  // Если 3 класса - используем все
+  let output_slice;
+  if (outputData.length === 100 && classes.length > 0) {
+    output_slice = [];
     for (let i = 0; i < classes.length; i++)
-      output_slice[i] = output[classes[i]];
+      output_slice[i] = outputData[classes[i]];
+  } else {
+    output_slice = [...outputData];
   }
-  find(DOM.predictedLabel).textContent = mapping[classes[indexOfMax(output_slice)]].toUpperCase();
+  
+  console.log("Output slice:", output_slice);
+  
+  // Проверяем, что есть классы для предсказания
+  if (classes.length === 0) {
+    find(DOM.predictedLabel).textContent = "ВЫБЕРИТЕ КЛАССЫ";
+  } else {
+    const predictedIndex = indexOfMax(output_slice);
+    const classId = classes[predictedIndex];
+    find(DOM.predictedLabel).textContent = mapping[classId].toUpperCase();
+  }
   drawHist(applySoftmax(output_slice));
 };
 
