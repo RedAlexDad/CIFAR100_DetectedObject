@@ -92,6 +92,12 @@ python main.py --model base --train
 # Обучить среднюю модель (3 conv слоя) с параметрами по умолчанию
 python main.py --model medium --train
 
+# Обучить глубокую модель (6 conv слоев) с параметрами по умолчанию
+python main.py --model deep --train
+
+# Обучить оптимизированную модель (6 conv слоев с BatchNorm и Dropout) с параметрами по умолчанию
+python main.py --model optimized --train
+
 # Обучить с кастомными параметрами
 python main.py --model medium --train --lr 0.001 --batch-size 64 --epochs 200
 

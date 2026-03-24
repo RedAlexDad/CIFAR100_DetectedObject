@@ -1,0 +1,390 @@
+======================================================================
+ ЛАБОРАТОРНАЯ РАБОТА №2 
+ Сверточная нейронная сеть для классификации CIFAR-100 
+ Дата: 2026-03-24 13:51:04
+======================================================================
+
+Используемое устройство: cuda
+GPU: NVIDIA GeForce GTX 1650 Ti
+
+======================================================================
+ЗАГРУЗКА ДАННЫХ CIFAR-100
+======================================================================
+Классы: ['bicycle', 'flatfish', 'train']
+Тренировочная выборка: 1500 изображений
+Тестовая выборка: 300 изображений
+Размер изображения: 32x32x3
+
+======================================================================
+ВИЗУАЛИЗАЦИЯ ДАННЫХ
+======================================================================
+Визуализация сохранена в lr2_data_visualization.png
+
+======================================================================
+СРАВНЕНИЕ MLP (ЛР1) И CNN (ЛР2)
+======================================================================
+
+Метрики MLP (ЛР1) на тесте:
+Класс           Precision    Recall       F1-score    
+---------------------------------------------------
+Велосипед       0.7059       0.6000       0.6486      
+Камбала         0.7353       0.7500       0.7426      
+Поезд           0.6726       0.7600       0.7136      
+---------------------------------------------------
+Accuracy        0.7033      
+
+
+======================================================================
+ МОДЕЛЬ 1: Базовая CNN (2 сверточных слоя) 
+======================================================================
+
+======================================================================
+АРХИТЕКТУРА МОДЕЛИ
+======================================================================
+Cifar100_CNN_Base(
+  (normalize): Normalize()
+  (seq): Sequential(
+    (0): Conv2d(3, 32, kernel_size=(5, 5), stride=(4, 4), padding=(2, 2))
+    (1): ReLU()
+    (2): Conv2d(32, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (3): ReLU()
+    (4): AdaptiveAvgPool2d(output_size=(1, 1))
+    (5): Flatten(start_dim=1, end_dim=-1)
+    (6): Linear(in_features=64, out_features=3, bias=True)
+  )
+)
+
+Общее количество параметров: 21,123
+Обучаемых параметров: 21,123
+======================================================================
+
+НАЧАЛО ОБУЧЕНИЯ
+  Learning rate: 0.005
+  Batch size: 128
+  Epochs: 100
+  Device: cuda
+
+Эпоха [1/100] | Train Loss: 1.1009, Train Acc: 34.07% | Test Loss: 1.0968, Test Acc: 36.00%
+Эпоха [10/100] | Train Loss: 1.0559, Train Acc: 45.40% | Test Loss: 1.0432, Test Acc: 47.00%
+Эпоха [20/100] | Train Loss: 1.0083, Train Acc: 50.13% | Test Loss: 1.0012, Test Acc: 54.67%
+Эпоха [30/100] | Train Loss: 0.9391, Train Acc: 55.60% | Test Loss: 0.9477, Test Acc: 59.00%
+Эпоха [40/100] | Train Loss: 0.8537, Train Acc: 61.60% | Test Loss: 0.9014, Test Acc: 58.00%
+Эпоха [50/100] | Train Loss: 0.7894, Train Acc: 64.93% | Test Loss: 0.8823, Test Acc: 57.67%
+Эпоха [60/100] | Train Loss: 0.7462, Train Acc: 68.87% | Test Loss: 0.8470, Test Acc: 61.00%
+Эпоха [70/100] | Train Loss: 0.7032, Train Acc: 70.07% | Test Loss: 0.8272, Test Acc: 62.00%
+Эпоха [80/100] | Train Loss: 0.6976, Train Acc: 70.60% | Test Loss: 0.7937, Test Acc: 62.33%
+Эпоха [90/100] | Train Loss: 0.6607, Train Acc: 73.20% | Test Loss: 0.7787, Test Acc: 62.00%
+Эпоха [100/100] | Train Loss: 0.6398, Train Acc: 73.67% | Test Loss: 0.7685, Test Acc: 66.67%
+
+Обучение завершено за 8.05 сек
+Лучшая точность на тесте: 66.67%
+
+======================================================================
+ОЦЕНКА МОДЕЛИ НА ТЕСТОВОЙ ВЫБОРКЕ
+======================================================================
+
+=== МЕТРИКИ ПО КЛАССАМ (Test) ===
+
+Класс           Precision    Recall       F1-score    
+---------------------------------------------------
+Велосипед       0.7093       0.6100       0.6559      
+Камбала         0.6396       0.7100       0.6730      
+Поезд           0.6602       0.6800       0.6700      
+---------------------------------------------------
+Accuracy        0.6667      
+
+=== МАТРИЦА ОШИБОК (в %) ===
+
+Строки - истинные классы, Столбцы - предсказанные
+
+            Велосипед Камбала   Поезд     
+Велосипед   61.0      20.0      19.0      
+Камбала     13.0      71.0      16.0      
+Поезд       12.0      20.0      68.0      
+
+Матрица ошибок сохранена в lr2_confusion_matrix.png
+
+=== АНАЛИЗ ОШИБОК ===
+Чаще всего путается: 'Велосипед' → 'Камбала' (20.0%)
+Графики обучения сохранены в lr2_learning_history.png
+Модель сохранена в cnn_base_model.pth
+
+======================================================================
+ МОДЕЛЬ 2: Средняя CNN (4 сверточных слоя) 
+======================================================================
+
+======================================================================
+АРХИТЕКТУРА МОДЕЛИ
+======================================================================
+Cifar100_CNN_Medium(
+  (normalize): Normalize()
+  (seq): Sequential(
+    (0): Conv2d(3, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): ReLU()
+    (2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (3): ReLU()
+    (4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (5): Conv2d(32, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (6): ReLU()
+    (7): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (8): ReLU()
+    (9): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (10): AdaptiveAvgPool2d(output_size=(1, 1))
+    (11): Flatten(start_dim=1, end_dim=-1)
+    (12): Linear(in_features=64, out_features=3, bias=True)
+  )
+)
+
+Общее количество параметров: 65,763
+Обучаемых параметров: 65,763
+======================================================================
+
+НАЧАЛО ОБУЧЕНИЯ
+  Learning rate: 0.003
+  Batch size: 128
+  Epochs: 150
+  Device: cuda
+
+Эпоха [1/150] | Train Loss: 1.0986, Train Acc: 33.27% | Test Loss: 1.0984, Test Acc: 33.33%
+Эпоха [10/150] | Train Loss: 1.0878, Train Acc: 43.13% | Test Loss: 1.0842, Test Acc: 42.00%
+Эпоха [20/150] | Train Loss: 1.0584, Train Acc: 44.00% | Test Loss: 1.0435, Test Acc: 44.67%
+Эпоха [30/150] | Train Loss: 1.0411, Train Acc: 45.60% | Test Loss: 1.0230, Test Acc: 49.00%
+Эпоха [40/150] | Train Loss: 1.0134, Train Acc: 49.33% | Test Loss: 0.9944, Test Acc: 56.00%
+Эпоха [50/150] | Train Loss: 0.9466, Train Acc: 55.13% | Test Loss: 0.9449, Test Acc: 56.00%
+Эпоха [60/150] | Train Loss: 0.8692, Train Acc: 60.00% | Test Loss: 0.9165, Test Acc: 54.33%
+Эпоха [70/150] | Train Loss: 0.8390, Train Acc: 61.87% | Test Loss: 0.8790, Test Acc: 56.00%
+Эпоха [80/150] | Train Loss: 0.8055, Train Acc: 63.53% | Test Loss: 0.8748, Test Acc: 57.00%
+Эпоха [90/150] | Train Loss: 0.7843, Train Acc: 65.47% | Test Loss: 0.8296, Test Acc: 63.33%
+Эпоха [100/150] | Train Loss: 0.7631, Train Acc: 66.73% | Test Loss: 0.8618, Test Acc: 61.67%
+Эпоха [110/150] | Train Loss: 0.7521, Train Acc: 67.40% | Test Loss: 0.8495, Test Acc: 60.33%
+Эпоха [120/150] | Train Loss: 0.7384, Train Acc: 68.13% | Test Loss: 0.8103, Test Acc: 63.00%
+Эпоха [130/150] | Train Loss: 0.7226, Train Acc: 69.53% | Test Loss: 0.7929, Test Acc: 64.00%
+Эпоха [140/150] | Train Loss: 0.7190, Train Acc: 69.73% | Test Loss: 0.7900, Test Acc: 64.00%
+Эпоха [150/150] | Train Loss: 0.7173, Train Acc: 69.80% | Test Loss: 0.7907, Test Acc: 63.67%
+
+Обучение завершено за 37.00 сек
+Лучшая точность на тесте: 65.67%
+
+======================================================================
+ОЦЕНКА МОДЕЛИ НА ТЕСТОВОЙ ВЫБОРКЕ
+======================================================================
+
+=== МЕТРИКИ ПО КЛАССАМ (Test) ===
+
+Класс           Precision    Recall       F1-score    
+---------------------------------------------------
+Велосипед       0.6939       0.6800       0.6869      
+Камбала         0.6353       0.5400       0.5838      
+Поезд           0.5897       0.6900       0.6359      
+---------------------------------------------------
+Accuracy        0.6367      
+
+=== МАТРИЦА ОШИБОК (в %) ===
+
+Строки - истинные классы, Столбцы - предсказанные
+
+            Велосипед Камбала   Поезд     
+Велосипед   68.0      13.0      19.0      
+Камбала     17.0      54.0      29.0      
+Поезд       13.0      18.0      69.0      
+
+Матрица ошибок сохранена в lr2_confusion_matrix.png
+
+=== АНАЛИЗ ОШИБОК ===
+Чаще всего путается: 'Камбала' → 'Поезд' (29.0%)
+Модель сохранена в cnn_medium_model.pth
+
+======================================================================
+ МОДЕЛЬ 3: Глубокая CNN (7 сверточных слоёв) 
+======================================================================
+
+======================================================================
+АРХИТЕКТУРА МОДЕЛИ
+======================================================================
+Cifar100_CNN_Deep(
+  (normalize): Normalize()
+  (seq): Sequential(
+    (0): Conv2d(3, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): ReLU()
+    (2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (3): ReLU()
+    (4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (5): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (6): ReLU()
+    (7): Conv2d(32, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (8): ReLU()
+    (9): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (10): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (11): ReLU()
+    (12): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (13): ReLU()
+    (14): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (15): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (16): ReLU()
+    (17): AdaptiveAvgPool2d(output_size=(1, 1))
+    (18): Flatten(start_dim=1, end_dim=-1)
+    (19): Linear(in_features=128, out_features=3, bias=True)
+  )
+)
+
+Общее количество параметров: 296,643
+Обучаемых параметров: 296,643
+======================================================================
+
+НАЧАЛО ОБУЧЕНИЯ
+  Learning rate: 0.002
+  Batch size: 64
+  Epochs: 200
+  Device: cuda
+
+Эпоха [1/200] | Train Loss: 1.1001, Train Acc: 33.33% | Test Loss: 1.0997, Test Acc: 33.33%
+Эпоха [10/200] | Train Loss: 1.0986, Train Acc: 33.33% | Test Loss: 1.0985, Test Acc: 33.33%
+Эпоха [20/200] | Train Loss: 1.0983, Train Acc: 36.07% | Test Loss: 1.0983, Test Acc: 35.67%
+Эпоха [30/200] | Train Loss: 1.0980, Train Acc: 42.20% | Test Loss: 1.0979, Test Acc: 44.00%
+Эпоха [40/200] | Train Loss: 1.0971, Train Acc: 43.93% | Test Loss: 1.0968, Test Acc: 48.00%
+Эпоха [50/200] | Train Loss: 1.0928, Train Acc: 45.20% | Test Loss: 1.0918, Test Acc: 45.67%
+Эпоха [60/200] | Train Loss: 1.0611, Train Acc: 45.33% | Test Loss: 1.0524, Test Acc: 43.67%
+Эпоха [70/200] | Train Loss: 1.0182, Train Acc: 49.13% | Test Loss: 1.0117, Test Acc: 52.00%
+Эпоха [80/200] | Train Loss: 0.9652, Train Acc: 52.00% | Test Loss: 0.9710, Test Acc: 51.67%
+Эпоха [90/200] | Train Loss: 0.9233, Train Acc: 53.07% | Test Loss: 0.9421, Test Acc: 56.33%
+Эпоха [100/200] | Train Loss: 0.8725, Train Acc: 58.47% | Test Loss: 0.9070, Test Acc: 55.00%
+Эпоха [110/200] | Train Loss: 0.8090, Train Acc: 63.07% | Test Loss: 0.8698, Test Acc: 58.33%
+Эпоха [120/200] | Train Loss: 0.7321, Train Acc: 68.13% | Test Loss: 0.7948, Test Acc: 63.67%
+Эпоха [130/200] | Train Loss: 0.7063, Train Acc: 68.07% | Test Loss: 0.7258, Test Acc: 69.33%
+Эпоха [140/200] | Train Loss: 0.5979, Train Acc: 75.87% | Test Loss: 0.7205, Test Acc: 74.00%
+Эпоха [150/200] | Train Loss: 0.5725, Train Acc: 77.13% | Test Loss: 0.6217, Test Acc: 75.00%
+Эпоха [160/200] | Train Loss: 0.5629, Train Acc: 77.53% | Test Loss: 0.5978, Test Acc: 75.33%
+Эпоха [170/200] | Train Loss: 0.5160, Train Acc: 78.80% | Test Loss: 0.5805, Test Acc: 77.33%
+Эпоха [180/200] | Train Loss: 0.5028, Train Acc: 79.47% | Test Loss: 0.5839, Test Acc: 77.67%
+Эпоха [190/200] | Train Loss: 0.4945, Train Acc: 80.13% | Test Loss: 0.5770, Test Acc: 78.33%
+Эпоха [200/200] | Train Loss: 0.4919, Train Acc: 80.00% | Test Loss: 0.5793, Test Acc: 78.00%
+
+Обучение завершено за 54.87 сек
+Лучшая точность на тесте: 78.67%
+
+======================================================================
+ОЦЕНКА МОДЕЛИ НА ТЕСТОВОЙ ВЫБОРКЕ
+======================================================================
+
+=== МЕТРИКИ ПО КЛАССАМ (Test) ===
+
+Класс           Precision    Recall       F1-score    
+---------------------------------------------------
+Велосипед       0.8333       0.8000       0.8163      
+Камбала         0.7434       0.8400       0.7887      
+Поезд           0.7692       0.7000       0.7330      
+---------------------------------------------------
+Accuracy        0.7800      
+
+=== МАТРИЦА ОШИБОК (в %) ===
+
+Строки - истинные классы, Столбцы - предсказанные
+
+            Велосипед Камбала   Поезд     
+Велосипед   80.0      9.0       11.0      
+Камбала     6.0       84.0      10.0      
+Поезд       10.0      20.0      70.0      
+
+Матрица ошибок сохранена в lr2_confusion_matrix.png
+
+=== АНАЛИЗ ОШИБОК ===
+Чаще всего путается: 'Поезд' → 'Камбала' (20.0%)
+Модель сохранена в cnn_deep_model.pth
+
+======================================================================
+ МОДЕЛЬ 4: Оптимизированная CNN (BatchNorm + Dropout) 
+======================================================================
+
+======================================================================
+АРХИТЕКТУРА МОДЕЛИ
+======================================================================
+Cifar100_CNN_Optimized(
+  (normalize): Normalize()
+  (block1): Sequential(
+    (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (2): ReLU()
+    (3): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (4): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (5): ReLU()
+    (6): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  )
+  (block2): Sequential(
+    (0): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (2): ReLU()
+    (3): Dropout2d(p=0.3, inplace=False)
+    (4): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (5): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (6): ReLU()
+    (7): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  )
+  (block3): Sequential(
+    (0): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): BatchNorm2d(255, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (2): ReLU()
+    (3): Dropout2d(p=0.3, inplace=False)
+    (4): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (5): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (6): ReLU()
+    (7): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  )
+  (classifier): Sequential(
+    (0): AdaptiveAvgPool2d(output_size=(1, 1))
+    (1): Flatten(start_dim=1, end_dim=-1)
+    (2): Dropout(p=0.3, inplace=False)
+    (3): Linear(in_features=256, out_features=3, bias=True)
+  )
+)
+
+Общее количество параметров: 1,147,969
+Обучаемых параметров: 1,147,969
+======================================================================
+
+НАЧАЛО ОБУЧЕНИЯ
+  Learning rate: 0.001
+  Batch size: 64
+  Epochs: 250
+  Device: cuda
+
+Traceback (most recent call last):
+  File "/home/redalexdad/GitHub/BMSTU/2 семестр/РНС/ЛАБ2/train_cnn.py", line 808, in <module>
+    results = main()
+              ^^^^^^
+  File "/home/redalexdad/GitHub/BMSTU/2 семестр/РНС/ЛАБ2/train_cnn.py", line 742, in main
+    model_opt, history_opt, time_opt, acc_opt = train_model(
+                                                ^^^^^^^^^^^^
+  File "/home/redalexdad/GitHub/BMSTU/2 семестр/РНС/ЛАБ2/train_cnn.py", line 390, in train_model
+    outputs = model(inputs)
+              ^^^^^^^^^^^^^
+  File "/home/redalexdad/.local/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/redalexdad/.local/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/redalexdad/GitHub/BMSTU/2 семестр/РНС/ЛАБ2/train_cnn.py", line 309, in forward
+    x = self.block3(x)
+        ^^^^^^^^^^^^^^
+  File "/home/redalexdad/.local/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/redalexdad/.local/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/redalexdad/.local/lib/python3.12/site-packages/torch/nn/modules/container.py", line 250, in forward
+    input = module(input)
+            ^^^^^^^^^^^^^
+  File "/home/redalexdad/.local/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/redalexdad/.local/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/redalexdad/.local/lib/python3.12/site-packages/torch/nn/modules/batchnorm.py", line 193, in forward
+    return F.batch_norm(
+           ^^^^^^^^^^^^^
+  File "/home/redalexdad/.local/lib/python3.12/site-packages/torch/nn/functional.py", line 2813, in batch_norm
+    return torch.batch_norm(
+           ^^^^^^^^^^^^^^^^^
+RuntimeError: running_mean should contain 256 elements not 255

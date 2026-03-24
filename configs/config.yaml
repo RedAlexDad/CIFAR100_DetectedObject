@@ -1,0 +1,140 @@
+# ============================================================================
+# КОНФИГУРАЦИЯ МОДЕЛИ И ОБУЧЕНИЯ
+# Формат: YAML
+# ============================================================================
+
+# Название конфигурации
+name: "default"
+description: "Конфигурация по умолчанию"
+
+# ============================================================================
+# АРХИТЕКТУРА МОДЕЛИ
+# Формат: список слоев
+# Conv: (in_channels, out_channels, kernel_size, stride, padding)
+# ============================================================================
+model_architecture:
+  # Блок 1
+  - type: Conv2d
+    args: [3, 32, 3, 1, 1]   # in, out, kernel, stride, padding
+  - type: ReLU
+  
+  - type: Dropout2d
+    args: [0.2]              # dropout rate
+  
+  - type: Conv2d
+    args: [32, 64, 3, 1, 1]
+  - type: ReLU
+  
+  - type: AvgPool2d
+    args: [2]                # kernel_size
+  
+  - type: Dropout2d
+    args: [0.3]
+  
+  # Классификатор
+  - type: AdaptiveAvgPool2d
+    args: [1]
+  - type: Flatten
+  - type: Linear
+    args: [64, 3]            # in_features, out_classes
+
+# ============================================================================
+# ГИПЕРПАРАМЕТРЫ ОБУЧЕНИЯ
+# ============================================================================
+hyperparameters:
+  learning_rate: 0.005
+  momentum: 0.9
+  weight_decay: 0.00001      # 1e-5
+  batch_size: 128
+  epochs: 500
+  label_smoothing: 0.1
+  
+  # Планировщик (StepLR)
+  scheduler:
+    type: StepLR
+    step_size: 240
+    gamma: 0.5
+
+# ============================================================================
+# АУГМЕНТАЦИЯ ДАННЫХ
+# ============================================================================
+augmentation:
+  # Цветовые искажения
+  brightness: [0.9, 1.1]
+  contrast: [0.9, 1.1]
+  saturation: [0.8, 1.2]
+  hue: null                  # null = отключено
+  
+  # Геометрические искажения
+  rotation: [-15.0, 15.0]    # degrees
+  translate: [0.1, 0.1]      # (x, y)
+  scale: [0.8, 1.2]
+  shear: [-5.0, 5.0]         # degrees
+  
+  # Всегда включено
+  random_crop: true
+  random_horizontal_flip: true
+
+# ============================================================================
+# ВАРИАНТЫ КОНФИГУРАЦИЙ (для перебора)
+# ============================================================================
+# Если задано несколько вариантов, будет запущено несколько экспериментов
+variants:
+  # Вариант 1: Dropout 0.2 + 0.3
+  - name: "dropout_0.2_0.3"
+    model_architecture:
+      - type: Conv2d
+        args: [3, 32, 3, 1, 1]
+      - type: ReLU
+      - type: Dropout2d
+        args: [0.2]
+      - type: Conv2d
+        args: [32, 64, 3, 1, 1]
+      - type: ReLU
+      - type: AvgPool2d
+        args: [2]
+      - type: Dropout2d
+        args: [0.3]
+      - type: AdaptiveAvgPool2d
+        args: [1]
+      - type: Flatten
+      - type: Linear
+        args: [64, 3]
+  
+  # Вариант 2: Dropout 0.2 + 0.2
+  - name: "dropout_0.2_0.2"
+    model_architecture:
+      - type: Conv2d
+        args: [3, 32, 3, 1, 1]
+      - type: ReLU
+      - type: Dropout2d
+        args: [0.2]
+      - type: Conv2d
+        args: [32, 64, 3, 1, 1]
+      - type: ReLU
+      - type: AvgPool2d
+        args: [2]
+      - type: Dropout2d
+        args: [0.2]
+      - type: AdaptiveAvgPool2d
+        args: [1]
+      - type: Flatten
+      - type: Linear
+        args: [64, 3]
+  
+  # Вариант 3: Без Dropout
+  - name: "no_dropout"
+    model_architecture:
+      - type: Conv2d
+        args: [3, 32, 3, 1, 1]
+      - type: ReLU
+      - type: Conv2d
+        args: [32, 64, 3, 1, 1]
+      - type: ReLU
+      - type: AvgPool2d
+        args: [2]
+      - type: AdaptiveAvgPool2d
+        args: [1]
+      - type: Flatten
+      - type: Linear
+        args: [64, 3]
