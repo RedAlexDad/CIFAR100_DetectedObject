@@ -260,3 +260,93 @@ classes:
   ids: [8, 32, 90]
   names: ["bicycle", "flatfish", "train"]
   names_ru: ["Велосипед", "Камбала", "Поезд"]
+
+# ============================================================================
+# ЭКСПЕРИМЕНТЫ ДЛЯ САМОСТОЯТЕЛЬНОЙ РАБОТЫ
+# ============================================================================
+experiments:
+  # Эксперимент 1: Базовое обучение с замороженной моделью
+  exp1_frozen:
+    name: "Frozen Backbone"
+    description: "Обучение только классификатора с замороженным backbone"
+    freeze_backbone: true
+      epochs: 30
+      lr: 0.001
+  
+    # Эксперимент 2: Fine-tuning с разморозкой
+    exp2_finetuning:
+      name: "Fine-tuning"
+      description: "Двухэтапное обучение: frozen → unfrozen"
+      freeze_backbone: false
+      unfreeze_after: 10
+      unfreeze_layers: 2
+      total_epochs: 50
+      lr_frozen: 0.001
+      lr_finetuned: 0.0001
+  
+    # Эксперимент 3: Сравнение оптимизаторов
+    exp3_optimizers:
+      name: "Optimizer Comparison"
+      description: "Сравнение SGD, Adam, RMSprop, Adagrad"
+      optimizers: ["sgd", "adam", "rmsprop", "adagrad"]
+      epochs: 60
+  
+    # Эксперимент 4: Влияние количества размороженных слоёв (keep_last)
+    # learning_rate = 1.5e-4
+    exp4_keep_last_1:
+      name: "Keep Last Layers 1"
+      description: "Обучение с заморозкой весов и разным keep_last (lr=1.5e-4)"
+      freeze_backbone: false
+      unfreeze_after: 10
+      learning_rate: 0.00015  # 1.5e-4
+      momentum: 0.9
+      weight_decay: 0.0001
+      batch_size: 128
+      epochs: 60
+      variants:
+        - keep_last: 2
+          name: "keep_last_2_lr1.5e-4"
+          unfreeze_layers: 2
+          description: "Заморозить все слои, кроме последних 2"
+        - keep_last: 5
+          name: "keep_last_5_lr1.5e-4"
+          unfreeze_layers: 5
+          description: "Заморозить все слои, кроме последних 5"
+        - keep_last: 8
+          name: "keep_last_8_lr1.5e-4"
+          unfreeze_layers: 8
+          description: "Заморозить все слои, кроме последних 8"
+  
+
+    # Эксперимент 4.1: Влияние количества размороженных слоёв (keep_last)
+    # learning_rate = 3e-4
+    exp4_keep_last_2:
+      name: "Keep Last Layers 2"
+      description: "Обучение с заморозкой весов и разным keep_last (lr=3e-4)"
+      freeze_backbone: false
+      unfreeze_after: 10
+      learning_rate: 0.0003  # 3e-4
+      momentum: 0.9
+      weight_decay: 0.0001
+      batch_size: 128
+      epochs: 60
+      variants:
+        - keep_last: 2
+          name: "keep_last_2_lr3e-4"
+          unfreeze_layers: 2
+          description: "Заморозить все слои, кроме последних 2"
+        - keep_last: 5
+          name: "keep_last_5_lr3e-4"
+          unfreeze_layers: 5
+          description: "Заморозить все слои, кроме последних 5"
+        - keep_last: 8
+          name: "keep_last_8_lr3e-4"
+          unfreeze_layers: 8
+          description: "Заморозить все слои, кроме последних 8"
+
+    # Эксперимент 5: Влияние аугментации
+    exp5_augmentation:
+      name: "Augmentation Impact"
+      description: "Сравнение разной силы аугментации"
+      aug_configs: ["minimal", "base", "strong"]
+      epochs: 30

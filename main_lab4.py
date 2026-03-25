@@ -160,45 +160,54 @@ def train_model_simple(model, train_loader, test_loader, config, device, writer=
     Returns:
         model, history, training_time, best_accuracy
     """
+    # Поддержка обоих форматов конфигурации
+    lr = config.get('lr', config.get('learning_rate', 0.001))
+    batch_size = config.get('batch_size', 64)
+    epochs = config.get('epochs', 30)
+    momentum = config.get('momentum', 0.9)
+    weight_decay = config.get('weight_decay', 1e-4)
+    label_smoothing = config.get('label_smoothing', 0.0)
+    use_scheduler = config.get('use_scheduler', True)
+    
     print(f"\n{'='*70}")
     print(" ОБУЧЕНИЕ МОДЕЛИ")
     print(f"{'='*70}")
-    print(f"  Learning rate: {config['lr']}")
-    print(f"  Batch size: {config['batch_size']}")
-    print(f"  Epochs: {config['epochs']}")
+    print(f"  Learning rate: {lr}")
+    print(f"  Batch size: {batch_size}")
+    print(f"  Epochs: {epochs}")
     print(f"  Device: {device}")
     print()
     
-    criterion = nn.CrossEntropyLoss(label_smoothing=config.get('label_smoothing', 0.0))
+    criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
     optimizer = torch.optim.SGD(
         model.parameters(),
-        lr=config['lr'],
-        momentum=config.get('momentum', 0.9),
-        weight_decay=config.get('weight_decay', 1e-4)
+        lr=lr,
+        momentum=momentum,
+        weight_decay=weight_decay
     )
     
     scheduler = None
-    if config.get('use_scheduler', False):
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config['epochs'])
+    if use_scheduler:
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     
     history = {'train_loss': [], 'train_acc': [], 'test_loss': [], 'test_acc': []}
     best_test_acc = 0.0
     best_model_state = None
     
     start_time = datetime.now()
-    
-    for epoch in range(config['epochs']):
+
+    for epoch in range(epochs):
         train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device)
         val_loss, val_acc = validate_epoch(model, test_loader, criterion, device)
-        
+
         history['train_loss'].append(train_loss)
         history['train_acc'].append(train_acc)
         history['test_loss'].append(val_loss)
         history['test_acc'].append(val_acc)
-        
+
         if scheduler:
             scheduler.step()
-        
+
         # TensorBoard
         if writer:
             writer.add_scalar('Loss/train_epoch', train_loss, epoch)
@@ -206,32 +215,32 @@ def train_model_simple(model, train_loader, test_loader, config, device, writer=
             writer.add_scalar('Accuracy/train_epoch', train_acc, epoch)
             writer.add_scalar('Accuracy/val_epoch', val_acc, epoch)
             writer.add_scalar('Learning_rate', optimizer.param_groups[0]['lr'], epoch)
-            
+
             if val_acc > best_test_acc:
                 writer.add_scalar('Best_Accuracy', val_acc, epoch)
-        
+
         # Сохранение лучшей модели
         if val_acc > best_test_acc:
             best_test_acc = val_acc
             best_model_state = model.state_dict().copy()
-            
+
             if writer:
                 writer.add_scalar('Best_Accuracy', best_test_acc, epoch)
-        
+
         # Вывод прогресса
         if (epoch + 1) % 10 == 0 or epoch == 0:
-            print(f"Эпоха [{epoch+1}/{config['epochs']}] | "
+            print(f"Эпоха [{epoch+1}/{epochs}] | "
                   f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}% | "
                   f"Test Loss: {val_loss:.4f}, Test Acc: {val_acc:.2f}%")
-    
+
     training_time = (datetime.now() - start_time).total_seconds()
-    
+
     if best_model_state:
         model.load_state_dict(best_model_state)
-    
+
     print(f"\nОбучение завершено за {training_time:.2f} сек")
     print(f"Лучшая точность на тесте: {best_test_acc:.2f}%")
-    
+
     return model, history, training_time, best_test_acc
 
 
