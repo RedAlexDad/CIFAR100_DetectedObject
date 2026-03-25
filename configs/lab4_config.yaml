@@ -1,0 +1,262 @@
+# ============================================================================
+# КОНФИГУРАЦИЯ ДЛЯ ЛАБОРАТОРНОЙ РАБОТЫ №4
+# Transfer Learning с предобученными моделями
+# ============================================================================
+
+name: "lab4_transfer_learning"
+description: "Конфигурация для ЛР4 - Transfer Learning (ResNet20 / MobileNetV2)"
+
+# ============================================================================
+# МОДЕЛИ
+# ============================================================================
+models:
+  # Чётный вариант - ResNet20 (используем ResNet18 как аналог)
+  resnet20:
+    type: "resnet20"
+    pretrained: true
+    freeze_backbone: true
+    description: "ResNet20 - чётный вариант"
+    
+  # Нечетный вариант - MobileNetV2
+  mobilenetv2:
+    type: "mobilenetv2"
+    pretrained: true
+    freeze_backbone: true
+    width_mult: 0.5
+    description: "MobileNetV2 x0.5 - нечетный вариант"
+
+# ============================================================================
+# ГИПЕРПАРАМЕТРЫ ПО УМОЛЧАНИЮ
+# ============================================================================
+hyperparameters:
+  # Базовая конфигурация (для замороженной модели)
+  base:
+    learning_rate: 0.001
+    momentum: 0.9
+    weight_decay: 0.0001
+    batch_size: 64
+    epochs: 30
+    label_smoothing: 0.0
+    use_scheduler: true
+    
+  # Для fine-tuning (после разморозки)
+  fine_tuning:
+    learning_rate: 0.0001  # LR / 10
+    momentum: 0.9
+    weight_decay: 0.0001
+    batch_size: 64
+    epochs: 20
+    label_smoothing: 0.0
+    use_scheduler: true
+    
+  # Быстрое обучение (для тестов)
+  fast:
+    learning_rate: 0.01
+    momentum: 0.9
+    weight_decay: 0.0001
+    batch_size: 128
+    epochs: 10
+    label_smoothing: 0.0
+    use_scheduler: false
+    
+  # Точное обучение
+  accurate:
+    learning_rate: 0.0005
+    momentum: 0.9
+    weight_decay: 0.00005
+    batch_size: 32
+    epochs: 50
+    label_smoothing: 0.1
+    use_scheduler: true
+
+# ============================================================================
+# ПАРАМЕТРЫ РАЗМОРОЗКИ
+# ============================================================================
+unfreeze_config:
+  # После какой эпохи размораживать (None = не размораживать)
+  unfreeze_after_epoch: 10
+  
+  # Количество слоёв для разморозки
+  num_layers_to_unfreeze: 2
+  
+  # Стратегии разморозки
+  strategies:
+    # Только последний блок
+    conservative:
+      num_layers: 1
+      description: "Разморозить только последний блок"
+    
+    # Последние 2 блока (по умолчанию)
+    balanced:
+      num_layers: 2
+      description: "Разморозить последние 2 блока"
+    
+    # Почти вся модель
+    aggressive:
+      num_layers: 4
+      description: "Разморозить почти всю модель"
+
+# ============================================================================
+# АУГМЕНТАЦИЯ ДАННЫХ (из ЛР3)
+# ============================================================================
+augmentation:
+  # Базовая аугментация
+  base:
+    brightness: [0.9, 1.1]
+    contrast: [0.9, 1.1]
+    saturation: [0.8, 1.2]
+    hue: null
+    rotation: [-15.0, 15.0]
+    translate: [0.1, 0.1]
+    scale: [0.8, 1.2]
+    shear: [-5.0, 5.0]
+    
+  # Минимальная аугментация (для fine-tuning)
+  minimal:
+    brightness: [0.95, 1.05]
+    contrast: [0.95, 1.05]
+    saturation: [0.9, 1.1]
+    rotation: [-5.0, 5.0]
+    translate: [0.05, 0.05]
+    scale: [0.9, 1.1]
+    shear: [-2.0, 2.0]
+    
+  # Сильная аугментация
+  strong:
+    brightness: [0.7, 1.3]
+    contrast: [0.7, 1.3]
+    saturation: [0.6, 1.4]
+    rotation: [-30.0, 30.0]
+    translate: [0.2, 0.2]
+    scale: [0.6, 1.4]
+    shear: [-10.0, 10.0]
+
+# ============================================================================
+# ОПТИМИЗАТОРЫ ДЛЯ СРАВНЕНИЯ
+# ============================================================================
+optimizers:
+  sgd:
+    type: "SGD"
+    lr: 0.001
+    momentum: 0.9
+    weight_decay: 0.0001
+    
+  adam:
+    type: "Adam"
+    lr: 0.001
+    betas: [0.9, 0.999]
+    weight_decay: 0.0001
+    
+  rmsprop:
+    type: "RMSprop"
+    lr: 0.001
+    momentum: 0.0
+    weight_decay: 0.0001
+    
+  adagrad:
+    type: "Adagrad"
+    lr: 0.01
+    lr_decay: 0.0
+    weight_decay: 0.0001
+
+# ============================================================================
+# ПЛАНИРОВЩИКИ СКОРОСТИ ОБУЧЕНИЯ
+# ============================================================================
+schedulers:
+  # Cosine Annealing (по умолчанию)
+  cosine:
+    type: "CosineAnnealingLR"
+    T_max: 30
+    eta_min: 0
+    
+  # Step LR
+  step:
+    type: "StepLR"
+    step_size: 10
+    gamma: 0.5
+    
+  # Reduce on Plateau
+  plateau:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    factor: 0.5
+    patience: 5
+    
+  # Exponential
+  exponential:
+    type: "ExponentialLR"
+    gamma: 0.95
+
+# ============================================================================
+# ЭКСПЕРИМЕНТЫ ДЛЯ САМОСТОЯТЕЛЬНОЙ РАБОТЫ
+# ============================================================================
+experiments:
+  # Эксперимент 1: Базовое обучение с замороженной моделью
+  exp1_frozen:
+    name: "Frozen Backbone"
+    description: "Обучение только классификатора с замороженным backbone"
+    freeze_backbone: true
+    epochs: 30
+    lr: 0.001
+    
+  # Эксперимент 2: Fine-tuning с разморозкой
+  exp2_finetuning:
+    name: "Fine-tuning"
+    description: "Двухэтапное обучение: frozen → unfrozen"
+    freeze_backbone: false
+    unfreeze_after: 10
+    unfreeze_layers: 2
+    total_epochs: 50
+    lr_frozen: 0.001
+    lr_finetuned: 0.0001
+    
+  # Эксперимент 3: Сравнение оптимизаторов
+  exp3_optimizers:
+    name: "Optimizer Comparison"
+    description: "Сравнение SGD, Adam, RMSprop, Adagrad"
+    optimizers: ["sgd", "adam", "rmsprop", "adagrad"]
+    epochs: 30
+    
+  # Эксперимент 4: Влияние количества размороженных слоёв
+  exp4_layers:
+    name: "Layers Unfreeze"
+    description: "Сравнение разного количества размороженных слоёв"
+    unfreeze_configs: [1, 2, 3, 4]
+    epochs: 50
+    
+  # Эксперимент 5: Влияние аугментации
+  exp5_augmentation:
+    name: "Augmentation Impact"
+    description: "Сравнение разной силы аугментации"
+    aug_configs: ["minimal", "base", "strong"]
+    epochs: 30
+
+# ============================================================================
+# НАСТРОЙКИ СОХРАНЕНИЯ
+# ============================================================================
+save_config:
+  # Папка для чекпоинтов
+  checkpoint_dir: "checkpoints/lab4"
+  
+  # Папка для TensorBoard логов
+  tb_log_dir: "runs/lab4"
+  
+  # Папка для результатов
+  output_dir: "outputs/lab4"
+  
+  # Сохранять ли историю обучения
+  save_history: true
+  
+  # Сохранять ли графики
+  save_plots: true
+  
+  # Формат сохранения моделей
+  model_format: "pth"  # или "onnx"
+
+# ============================================================================
+# КЛАССЫ CIFAR-100 (те же что в ЛР1-3)
+# ============================================================================
+classes:
+  ids: [8, 32, 90]
+  names: ["bicycle", "flatfish", "train"]
+  names_ru: ["Велосипед", "Камбала", "Поезд"]

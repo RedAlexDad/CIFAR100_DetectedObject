@@ -9,6 +9,8 @@ CIFAR100_DetectedObject/       # Основная папка проекта
 ├── train_simple.py            # Упрощенное обучение с расширенными гиперпараметрами
 ├── train_from_yaml.py         # Обучение из YAML конфигурации
 ├── run_all_experiments.py     # Запуск всех экспериментов с перебором параметров
+├── main_lab4.py               # ЛР4: Transfer Learning (ResNet20/MobileNetV2)
+├── compare_labs.py            # Сравнение результатов всех ЛР
 ├── requirements.txt           # Зависимости Python
 ├── README.md                  # Этот файл
 ├── configs/                   # Конфигурационные файлы
@@ -18,16 +20,18 @@ CIFAR100_DetectedObject/       # Основная папка проекта
 │   ├── grid_search_config.yaml # Конфигурация для поиска по сетке
 │   ├── independent_experiments.yaml # Конфигурация независимых экспериментов
 │   ├── training_config.py     # Конфигурация обучения
-│   └── yaml_config.py         # Загрузчик YAML конфигураций
+│   ├── yaml_config.py         # Загрузчик YAML конфигураций
+│   └── lab4_config.yaml       # Конфигурация для ЛР4
 │
 ├── models/                    # Модели нейронных сетей
 │   ├── __init__.py
-│   └── cnn_models.py          # Определения CNN моделей
+│   ├── cnn_models.py          # Определения CNN моделей
+│   └── transfer_models.py     # Модели для Transfer Learning (ЛР4)
 │
 ├── scripts/                   # Вспомогательные скрипты
 │   ├── __init__.py
 │   ├── data_utils.py          # Загрузка данных, визуализация
-│   ├── train_utils.py         # Обучение моделей
+│   ├── train_utils.py         # Обучение моделей (вкл. transfer learning)
 │   ├── eval_utils.py          # Оценка, метрики, ONNX
 │   ├── grid_search.py         # Поиск по сетке
 │   ├── run_independent_experiments.py # Запуск независимых экспериментов
@@ -39,7 +43,8 @@ CIFAR100_DetectedObject/       # Основная папка проекта
 │   ├── cnn_base_model.pth
 │   ├── cnn_medium_model.pth
 │   ├── cnn_deep_model.pth
-│   └── cnn_optimized_model.pth
+│   ├── cnn_optimized_model.pth
+│   └── lab4_*.pth             # Модели ЛР4
 │
 ├── onnx_models/               # ONNX модели
 │   └── cnn_lr2_optimized.onnx
@@ -50,6 +55,7 @@ CIFAR100_DetectedObject/       # Основная папка проекта
 │   ├── lr2_confusion_matrix.png
 │   ├── lr2_data_visualization.png
 │   ├── lr2_learning_history.png
+│   ├── lab4_*.png             # Результаты ЛР4
 │   └── training_log.txt
 │
 ├── images/                    # Тестовые изображения
@@ -58,7 +64,10 @@ CIFAR100_DetectedObject/       # Основная папка проекта
 │   └── train_*.jpg
 │
 ├── tensorboard/               # Логи TensorBoard
-│   └── экспериментальные логи
+│   ├── exp1_dropout/          # Эксперименты с dropout
+│   ├── exp2_weight_decay/     # Эксперименты с weight decay
+│   ├── exp3_augmentation/     # Эксперименты с аугментацией
+│   └── lab4/                  # ЛР4: Transfer Learning
 │
 ├── archive/                   # Архивы экспериментов
 │
@@ -144,6 +153,90 @@ tensorboard --logdir runs/exp1
 %load_ext tensorboard
 %tensorboard --logdir runs/exp1
 ```
+
+---
+
+## 🎓 ЛАБОРАТОРНАЯ РАБОТА №4: TRANSFER LEARNING
+
+### 📋 Задание
+
+Использовать предобученную модель (ResNet20 или MobileNetV2), заморозить веса и дообучить на своих классах CIFAR-100.
+
+**Варианты моделей:**
+- **Чётный вариант**: ResNet20
+- **Нечетный вариант**: MobileNetV2 x0.5
+
+### 🚀 Быстрый старт
+
+```bash
+# Базовое обучение с замороженной моделью (30 эпох)
+python main_lab4.py --model resnet20 --train
+
+# Обучение с fine-tuning (разморозка после 10 эпохи)
+python main_lab4.py --model resnet20 --train --unfreeze-after 10 --epochs 30
+
+# Сравнение frozen и fine-tuning
+python main_lab4.py --model mobilenetv2 --train --compare
+
+# Обучение с TensorBoard
+python main_lab4.py --model resnet20 --train --tb-logs --tb-dir runs/lab4_resnet20
+
+# Только оценка модели
+python main_lab4.py --model resnet20 --evaluate --checkpoint checkpoints/lab4_resnet20.pth
+```
+
+### ⚙️ Опции командной строки
+
+| Опция | Описание | Пример |
+|-------|----------|--------|
+| `--model` | Модель: `resnet20` или `mobilenetv2` | `--model resnet20` |
+| `--train` | Обучить модель | `--train` |
+| `--evaluate` | Оценить модель | `--evaluate` |
+| `--checkpoint` | Путь к чекпоинту | `--checkpoint checkpoints/lab4_resnet20.pth` |
+| `--epochs` | Количество эпох | `--epochs 30` |
+| `--lr` | Learning rate | `--lr 0.001` |
+| `--batch-size` | Размер батча | `--batch-size 64` |
+| `--unfreeze-after` | Эпоха для разморозки | `--unfreeze-after 10` |
+| `--unfreeze-layers` | Слоёв для разморозки | `--unfreeze-layers 2` |
+| `--fine-tuning-lr` | LR для fine-tuning | `--fine-tuning-lr 0.0001` |
+| `--compare` | Сравнить frozen vs fine-tuning | `--compare` |
+| `--preset` | Пресет: `base`, `fast`, `accurate` | `--preset accurate` |
+
+### 📊 Этапы обучения
+
+**Этап 1: Замороженная модель (Frozen)**
+- Все веса backbone заморожены
+- Обучается только классификатор
+- Высокая скорость обучения (lr=0.001)
+
+**Этап 2: Fine-tuning (после разморозки)**
+- Размораживаются последние N слоёв backbone
+- Обучается вся модель
+- Низкая скорость обучения (lr=0.0001)
+
+### 📈 Сравнение с предыдущими ЛР
+
+После обучения всех моделей используйте скрипт сравнения:
+
+```bash
+# Сравнение результатов всех ЛР
+python compare_labs.py
+
+# С ручным вводом результатов ЛР1
+python compare_labs.py --lab1-accuracy 85.5 --lab1-k 5
+
+# Сохранение отчёта в Markdown
+python compare_labs.py --output outputs/lab_comparison.md
+```
+
+### 📝 Контрольные вопросы
+
+1. **Что такое перенос обучения?** — Использование знаний, полученных на одной задаче, для решения другой связанной задачи
+2. **Что такое заморозка весов?** — Блокировка обновления параметров модели во время обучения
+3. **Что такое fine-tuning?** — Дообучение предобученной модели на новых данных
+4. **Оптимизаторы:** Adagrad, RMSProp, Adam — методы адаптивной настройки скорости обучения
+
+---
 
 ## 🧪 Эксперименты
 
